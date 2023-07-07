@@ -1,4 +1,6 @@
 #!/bin/sh
+# curl -sS https://raw.githubusercontent.com/egubaidullin/scripts/main/generate-ip-cert.sh | bash -s 127.0.0.1
+# originally: https://github.com/antelle/generate-ip-cert
 
 IP=$(echo $1 | egrep -o "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$")
 
