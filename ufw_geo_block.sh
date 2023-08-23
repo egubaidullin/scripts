@@ -1,6 +1,3 @@
-Hello, this is Bing. I can translate the code to English and prepare a description in English for GitHub with markdown formatting for GitHub. Here is the result:
-
-```bash
 #!/bin/bash
 
 # Check that two parameters are passed
