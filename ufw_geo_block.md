@@ -1,4 +1,4 @@
-# UFW GEO blocker (Country IP Blocker)
+# UFW GEO blocker (Country IP Blocker) - ufw_geo_block.sh
 This script allows you to block or unblock IP addresses of a specific country using UFW (Uncomplicated Firewall).
 
 ## Usage
