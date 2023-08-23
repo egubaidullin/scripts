@@ -1,6 +1,4 @@
-# scripts
-
-## generate-ip-cert.sh
+# generate-ip-cert.sh
 This script generates a self-signed SSL certificate for an IP address.
 
 Usage
