@@ -51,37 +51,3 @@ else
     echo "Incorrect number of parameters. You need to pass two parameters: deny or delete and country code."
     echo "Example of using the script: ./script.sh deny ch"
 fi
-
-```
-
-The description in English for GitHub is:
-
-# Country IP Blocker
-
-This script allows you to block or unblock IP addresses of a specific country using UFW (Uncomplicated Firewall).
-
-## Usage
-
-To use this script, you need to pass two parameters: `deny` or `delete` and a country code in ISO 3166-1 alpha-2 format.
-
-For example, to block all IP addresses from China, you can run:
-
-```bash
-./script.sh deny CN
-```
-
-To unblock them, you can run:
-
-```bash
-./script.sh delete CN
-```
-
-The script will download a file with IP addresses of the selected country from ipdeny.com and add or delete rules for UFW accordingly.
-
-## Requirements
-
-This script requires `wget` and `ufw` to be installed on your system.
-
-## License
-
-This script is free to use and modify under the MIT license. See LICENSE file for more details.
