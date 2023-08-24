@@ -44,9 +44,10 @@ To delete a previously added rule, use the following syntax:
 ```
 ## Important Notes:
 
-Superuser privileges (**sudo**) are required to interact with UFW.
-Ensure proper UFW configuration before using the script.
-Understand the implications of blocking or allowing traffic from specific countries.
-Adjust the script for non-Ubuntu environments if necessary.
-Test the script in a controlled environment before applying to production.
-With the ability to handle port ranges, various protocols, and even actions without port specifics, this script grants you fine-grained control over your firewall rules. Modify as needed and proceed with confidence in your firewall management tasks. Happy scripting!
+- Superuser privileges (**`sudo`**) are required to interact with UFW.
+- Ensure proper UFW configuration before using the script.
+- Understand the implications of blocking or allowing traffic from specific countries.
+- Adjust the script for non-Ubuntu environments if necessary.
+- Test the script in a controlled environment before applying to production.
+
+With the ability to handle port ranges, various protocols, and even actions without port specifics, this script grants you fine-grained control over your firewall rules. Modify as needed and proceed with confidence in your firewall management tasks.
