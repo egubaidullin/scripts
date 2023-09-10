@@ -40,6 +40,7 @@ Restart the ssh service with sudo service ssh restart.
 Now, whenever someone logs in to your server via SSH, you will receive a message like this on your Telegram:
 
 ```
+Time: 01/02/2023 01:02:03 (UTC  0000)
 Host: test_host
 User: user
 Host: 192.168.2.238
