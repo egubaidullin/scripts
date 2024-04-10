@@ -24,6 +24,10 @@
 #
 # The script will guide you through the process and prompt for confirmation before making any changes.
 
+
+echo " Please install the bc package on your system using sudo apt-get update sudo apt-get install bc"
+
+
 # Display usage guide
 echo "PHP-FPM Optimization Script"
 echo "This script will optimize PHP-FPM settings and modify PHP memory limits based on system resources."
