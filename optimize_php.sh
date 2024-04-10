@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Description
+#
 # ## PHP-FPM Optimization Script
 #
 # This Bash script optimizes PHP-FPM settings and modifies PHP memory limits based on system resources. It performs the following tasks:
@@ -23,10 +25,6 @@
 # ```
 #
 # The script will guide you through the process and prompt for confirmation before making any changes.
-
-
-echo " Please install the bc package on your system using sudo apt-get update sudo apt-get install bc"
-
 
 # Display usage guide
 echo "PHP-FPM Optimization Script"
@@ -94,7 +92,7 @@ echo "Total RAM: $total_ram MB"
 echo "Max child size: $max_child_size MB"
 
 # Calculate recommended pm.max_children ratio
-ratio=$(bc <<< "scale=0; $total_ram/$max_child_size")
+ratio=$(( $total_ram / $max_child_size ))
 
 # Calculate CPU cores
 cores=$(( $(lscpu | awk '/^Socket/{print $2}') * $(lscpu | awk '/^Core/{print $4}') ))
