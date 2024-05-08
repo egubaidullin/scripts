@@ -2,17 +2,17 @@
 ## Script Description
 This Bash script is designed to set up a secure file transfer environment for the `ftpuser` user. It facilitates the uploading of video files to a shared directory, which can then be served by an Nginx web server. The script performs several key functions:
 
-- **User and Group Management**: It ensures that the `ftpuser_sport` user and the `webdata` group exist on the system. If they don't, the script creates them.
+- **User and Group Management**: It ensures that the `ftpuser` user and the `webdata` group exist on the system. If they don't, the script creates them.
 - **Directory Setup**: It creates a shared directory at `/storage/your_folder` with appropriate permissions for the `webdata` group.
 - **Access Restrictions**: It restricts the `ftpuser` user's access to their home directory and sets up a chroot environment to prevent access to the rest of the filesystem.
-- **SFTP Configuration**: It configures SSH to use internal-sftp for the `ftpuser_sport` user, allowing for secure file transfers.
+- **SFTP Configuration**: It configures SSH to use internal-sftp for the `ftpuser` user, allowing for secure file transfers.
 - **Service Management**: It restarts the SSH service to apply the new configuration.
 
 ## Initial Setup
 The script is pre-configured for the task of uploading video files for distribution via Nginx, using the `webdata` group to manage access permissions.
 
 ## How It Works
-1. **User and Group Checks**: The script checks for the existence of the `ftpuser_sport` user and the `webdata` group, creating them if necessary.
+1. **User and Group Checks**: The script checks for the existence of the `ftpuser` user and the `webdata` group, creating them if necessary.
 2. **Shared Directory**: It sets up a shared directory with the correct group ownership and permissions.
 3. **User Restrictions**: The script modifies the user's home directory and adds an entry to `/etc/passwd` to restrict their access.
 4. **SSH Configuration**: It appends configuration settings to `/etc/ssh/sshd_config` to set up a chroot environment and enable SFTP access.
