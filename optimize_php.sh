@@ -92,7 +92,9 @@ echo "Total RAM: $total_ram MB"
 echo "Max child size: $max_child_size MB"
 
 # Calculate recommended pm.max_children ratio
-ratio=$(( $total_ram / $max_child_size ))
+#ratio=$(( $total_ram / $max_child_size ))
+ratio=$(echo "scale=0; $total_ram / $max_child_size" | bc)
+
 
 # Calculate CPU cores
 cores=$(( $(lscpu | awk '/^Socket/{print $2}') * $(lscpu | awk '/^Core/{print $4}') ))
