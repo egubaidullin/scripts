@@ -10,3 +10,4 @@
 | **[create_databases.sh](create_databases.sh)** | This Bash script simplifies the process of creating MySQL databases and granting privileges to the webmaster user. It provides the following features. [Learn more](create_databases.md). |
 | **[optimize_php.sh](optimize_php.sh)** | This Bash script optimizes PHP-FPM settings and modifies PHP memory limits based on system resources. [Learn more](optimize_php.md). |
 | **[SFTP_Restricted_Directory_Access.sh](SFTP_Restricted_Directory_Access.sh)** | This Bash script sets up secure SFTP access with restricted directory permissions for the user. [Learn more](SFTP_Restricted_Directory_Access.md). |
+| **[project2file.py](project2file.py)** | Project2File is a Python script for saving project structure and file contents to text files. [Learn more](project2file.md). |
