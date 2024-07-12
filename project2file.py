@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 # Configuration variables
 SKIP_DIRS = {'.idea', '.venv', '__pycache__', 'node_modules'}
-TEXT_EXTENSIONS = {'.txt', '.py', '.js', '.html', '.css', '.md', '.json', '.xml', '.csv', '.ini', '.cfg', '.yaml', '.yml'}
+TEXT_EXTENSIONS = {'.txt', '.py', '.js', '.html', '.css', '.md', '.json', '.xml', '.csv', '.ini', '.cfg', '.yaml', '.yml'} # Use '*' to check all files
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 MAX_WORKERS = 4
 
@@ -16,15 +16,15 @@ MAX_WORKERS = 4
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def is_text_file(file_path):
-    if not os.path.splitext(file_path)[1]:
+    if os.path.splitext(file_path)[1].lower() in TEXT_EXTENSIONS:
+        return True
+    if TEXT_EXTENSIONS == {'*'}:
         try:
             with open(file_path, 'rb') as f:
                 return not bool(f.read(1024).translate(None, bytes([7,8,9,10,12,13,27] + list(range(0x20, 0x100))))) 
         except IOError:
             return False
-    
-    mime_type, _ = mimetypes.guess_type(file_path)
-    return mime_type and mime_type.startswith('text') or os.path.splitext(file_path)[1].lower() in TEXT_EXTENSIONS
+    return False
 
 def write_file_content(out_file, file_path, rel_path):
     out_file.write(f"<file path=\"{rel_path}\">\n")
@@ -71,7 +71,7 @@ def process_file(args):
     write_file_content(out_file, file_path, rel_path)
 
 def main():
-    parser = argparse.ArgumentParser(description=f"Generate a text file containing contents and structure of files in a directory and its subdirectories, skipping {', '.join(SKIP_DIRS)} directories.")
+    parser = argparse.ArgumentParser(description=f"Save project structure and file contents to text files, skipping {', '.join(SKIP_DIRS)} directories.")
     parser.add_argument("input_dir", help="Input directory path")
     parser.add_argument("-s", action="store_true", help="Save directory structure to a file")
     parser.add_argument("-f", action="store_true", help="Save file contents to a file")
