@@ -1,23 +1,37 @@
 # PHP-FPM Optimization Script
 
-This Bash script is designed to optimize PHP-FPM settings and adjust the PHP memory limit based on available system resources. It automates the process of tuning PHP-FPM for optimal performance by analyzing your server's hardware specifications and current PHP configuration.
+This Bash script is designed to optimize PHP-FPM settings based on your system resources. It detects installed PHP versions, displays current and proposed settings, and allows you to choose which versions to optimize.
+
+## Requirements
+- Root access
+- Installed PHP-FPM versions
 
 ## Features
 
-- Dynamically determines the current PHP version.
-- Checks the PHP-FPM log for events where the maximum child process limit was reached.
-- Retrieves the current `pm` parameters and `memory_limit` settings from the configuration.
-- Calculates total system RAM and the average size of PHP-FPM child processes to recommend optimal `pm.max_children` settings.
-- Determines the number of CPU cores to suggest values for `pm.min_spare_servers`, `pm.start_servers`, and `pm.max_spare_servers`.
-- Displays recommended settings to the user.
-- Creates a timestamped backup of the `php.ini` file in the user's home directory before applying any changes.
-- Prompts the user for confirmation before modifying the `php.ini` file with recommended settings.
-- Applies changes to the `pm` parameters and `memory_limit` setting in the `php.ini` file.
-- Restarts PHP-FPM to apply new settings and displays the updated configuration for verification.
+- Detects installed PHP-FPM versions
+- Calculates system resources (total RAM, CPU cores, average PHP-FPM process size)
+- Calculates recommended PHP-FPM settings (pm.max_children, pm.start_servers, pm.min_spare_servers, pm.max_spare_servers, memory_limit)
+- Displays current and recommended settings for each detected PHP version
+- Allows you to choose which PHP versions to optimize
+- Creates backups of configuration files before making changes
+- Restarts PHP-FPM services after optimization
 
 ## Usage
 
 To use this script, simply execute it from the command line:
 
 ```bash
-bash /path/to/optimize_php.sh
+sudo ./php-fpm-optimizer.sh
+```
+
+## Script Overview
+1. Check if the script is run as root.
+2. Detect installed PHP versions.
+3. Calculate system resources and recommended settings.
+4. Display current settings and recommended changes for all versions.
+5. Prompt the user to select PHP versions to optimize.
+6. Optimize the selected PHP versions:
+   - Create backups of configuration files.
+   - Update pool configuration and PHP memory limit.
+   - Restart PHP-FPM service.
+7. Confirm the completion of the optimization process.
