@@ -9,6 +9,6 @@
 | **[docker_install.sh](docker_install.sh)** | This will install the latest versions of Docker and Docker-compose on your system. [Learn more](docker_install.md). |
 | **[tlg_login_notify.sh](tlg_login_notify.sh)** | This is a bash script that sends a notification to your Telegram account whenever someone logs in to your server via SSH. [Learn more](tlg_login_notify.md). |
 | **[create_databases.sh](create_databases.sh)** | This Bash script simplifies the process of creating MySQL databases and granting privileges to the webmaster user. It provides the following features. [Learn more](create_databases.md). |
-| **[optimize_php.sh](optimize_php.sh)** | This Bash script optimizes PHP-FPM settings and modifies PHP memory limits based on system resources. [Learn more](optimize_php.md). |
+| **[optimize_php.sh](optimize_php.sh)** | TThis Bash script is designed to optimize PHP-FPM settings based on your system resources. It detects installed PHP versions, displays current and proposed settings, and allows you to choose which versions to optimize. [Learn more](optimize_php.md). |
 | **[SFTP_Restricted_Directory_Access.sh](SFTP_Restricted_Directory_Access.sh)** | This Bash script sets up secure SFTP access with restricted directory permissions for the user. [Learn more](SFTP_Restricted_Directory_Access.md). |
 | **[project2file.py](project2file.py)** | Project2File is a Python script for saving project structure and file contents to text files. [Learn more](project2file.md). |
