@@ -19,9 +19,14 @@ This Bash script is designed to optimize PHP-FPM settings based on your system r
 ## Usage
 
 To use this script, simply execute it from the command line:
-
 ```bash
-sudo ./php-fpm-optimizer.sh
+wget https://raw.githubusercontent.com/egubaidullin/scripts/main/optimize_php.sh && bash optimize_php.sh
+```
+or
+```bash
+wget https://raw.githubusercontent.com/egubaidullin/scripts/main/optimize_php.sh 
+chmod +x php-fpm-optimizer.sh
+./php-fpm-optimizer.sh
 ```
 
 ## Script Overview
