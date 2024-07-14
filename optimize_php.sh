@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# PHP-FPM Optimization Script
+# Corrected PHP-FPM Optimization Script with Version-Specific Calculations
 
 set -e
 
@@ -63,52 +63,46 @@ update_config() {
     fi
 }
 
-# Function to calculate system resources and PHP-FPM settings
-calculate_system_resources() {
-    total_ram=$(free -m | awk '/Mem/{print $2}')
-    cpu_cores=$(nproc)
+# Function to calculate system resources and PHP-FPM settings for a specific version
+calculate_php_fpm_settings() {
+    local php_version=$1
+    local total_ram=$(free -m | awk '/Mem/{print $2}')
+    local cpu_cores=$(nproc)
     
-    # Calculate average PHP-FPM process size, use a default if no processes are running
-    avg_process_size=$(ps -C php-fpm --no-headers -o rss | awk '{ sum += $1; count++ } END { if (count > 0) print int(sum / count / 1024); else print "0" }')
+    # Calculate average PHP-FPM process size for this specific version
+    local avg_process_size=$(ps -C php-fpm$php_version --no-headers -o rss | awk '{ sum += $1; count++ } END { if (count > 0) print int(sum / count / 1024); else print "0" }')
     
     if [ "$avg_process_size" == "0" ]; then
-        echo "No PHP-FPM processes are currently running. Using default values for calculations."
+        echo "No PHP-FPM $php_version processes are currently running. Using default values for calculations."
         avg_process_size=50  # Default value in MB if no processes are running
     fi
 
     # Calculate recommended settings
-    max_children=$((total_ram / avg_process_size))
-    start_servers=$((cpu_cores * 2))
-    min_spare_servers=$cpu_cores
-    max_spare_servers=$((cpu_cores * 3))
-    recommended_memory_limit="256M"
+    local max_children=$((total_ram / avg_process_size))
+    local start_servers=$((cpu_cores * 2))
+    local min_spare_servers=$cpu_cores
+    local max_spare_servers=$((cpu_cores * 3))
+    local recommended_memory_limit="256M"
 
-    echo "System information:"
-    echo "Total RAM: $total_ram MB"
-    echo "CPU cores: $cpu_cores"
-    echo "Average PHP-FPM process size: $avg_process_size MB"
-    echo
-    echo "Recommended settings:"
-    echo "pm.max_children = $max_children"
-    echo "pm.start_servers = $start_servers"
-    echo "pm.min_spare_servers = $min_spare_servers"
-    echo "pm.max_spare_servers = $max_spare_servers"
-    echo "memory_limit = $recommended_memory_limit"
-    echo
+    echo "$max_children $start_servers $min_spare_servers $max_spare_servers $recommended_memory_limit $avg_process_size"
 }
 
-# Function to get PHP-FPM settings
+# Function to get and display PHP-FPM settings
 get_php_fpm_settings() {
     local php_version=$1
     local pool_conf="/etc/php/$php_version/fpm/pool.d/www.conf"
     local php_ini="/etc/php/$php_version/fpm/php.ini"
 
+    # Get recommended settings
+    read -r rec_max_children rec_start_servers rec_min_spare_servers rec_max_spare_servers rec_memory_limit avg_process_size <<< $(calculate_php_fpm_settings $php_version)
+
     echo "PHP $php_version settings:"
-    echo "Current pm.max_children = $(get_current_value "$pool_conf" "pm.max_children") | Recommended = $max_children"
-    echo "Current pm.start_servers = $(get_current_value "$pool_conf" "pm.start_servers") | Recommended = $start_servers"
-    echo "Current pm.min_spare_servers = $(get_current_value "$pool_conf" "pm.min_spare_servers") | Recommended = $min_spare_servers"
-    echo "Current pm.max_spare_servers = $(get_current_value "$pool_conf" "pm.max_spare_servers") | Recommended = $max_spare_servers"
-    echo "Current memory_limit = $(get_current_value "$php_ini" "memory_limit") | Recommended = $recommended_memory_limit"
+    echo "Average PHP-FPM process size: $avg_process_size MB"
+    echo "Current pm.max_children = $(get_current_value "$pool_conf" "pm.max_children") | Recommended = $rec_max_children"
+    echo "Current pm.start_servers = $(get_current_value "$pool_conf" "pm.start_servers") | Recommended = $rec_start_servers"
+    echo "Current pm.min_spare_servers = $(get_current_value "$pool_conf" "pm.min_spare_servers") | Recommended = $rec_min_spare_servers"
+    echo "Current pm.max_spare_servers = $(get_current_value "$pool_conf" "pm.max_spare_servers") | Recommended = $rec_max_spare_servers"
+    echo "Current memory_limit = $(get_current_value "$php_ini" "memory_limit") | Recommended = $rec_memory_limit"
     echo
 }
 
@@ -119,12 +113,15 @@ optimize_php_version() {
     echo "Optimizing PHP $php_version"
 
     # Define file paths
-    pool_conf="/etc/php/$php_version/fpm/pool.d/www.conf"
-    php_ini="/etc/php/$php_version/fpm/php.ini"
+    local pool_conf="/etc/php/$php_version/fpm/pool.d/www.conf"
+    local php_ini="/etc/php/$php_version/fpm/php.ini"
 
     # Create backups
     create_backup "$pool_conf"
     create_backup "$php_ini"
+
+    # Get recommended settings
+    read -r max_children start_servers min_spare_servers max_spare_servers recommended_memory_limit avg_process_size <<< $(calculate_php_fpm_settings $php_version)
 
     # Update pool configuration
     update_config "$pool_conf" "pm.max_children" "$max_children"
@@ -150,8 +147,10 @@ optimize_php_version() {
 echo "Detected PHP versions: ${PHP_VERSIONS[*]}"
 echo
 
-# Calculate system resources and recommended settings
-calculate_system_resources
+echo "System information:"
+echo "Total RAM: $(free -m | awk '/Mem/{print $2}') MB"
+echo "CPU cores: $(nproc)"
+echo
 
 # Display current settings and recommended changes for all versions
 for version in "${PHP_VERSIONS[@]}"; do
