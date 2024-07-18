@@ -25,8 +25,8 @@ wget https://raw.githubusercontent.com/egubaidullin/scripts/main/optimize_php.sh
 or
 ```bash
 wget https://raw.githubusercontent.com/egubaidullin/scripts/main/optimize_php.sh 
-chmod +x php-fpm-optimizer.sh
-./php-fpm-optimizer.sh
+chmod +x optimize_php.sh
+./optimize_php.sh
 ```
 
 ## Script Overview
