@@ -15,7 +15,7 @@ usage() {
 
 # Check if script is run as root
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root" 
+   echo "This script must be run as root"
    usage
    exit 1
 fi
@@ -90,8 +90,7 @@ update_config() {
 
     current_value=$(get_current_value "$file" "$param")
     if [ "$current_value" != "$value" ]; then
-        # Use ';' for commenting in PHP-FPM configuration files
-        sed -i "s/^$param\s*=.*$/;& ; Old value\n$param = $value ; New value/" "$file"
+        sed -i "s/^$param\s*=.*$/$param = $value/" "$file"
         echo "Updated $param: $current_value -> $value"
         debug_log "Updated $param in $file: $current_value -> $value"
     else
@@ -105,13 +104,13 @@ calculate_php_fpm_settings() {
     local php_version=$1
     local total_ram=$(free -m | awk '/Mem/{print $2}')
     local cpu_cores=$(nproc)
-    
+
     debug_log "Calculating settings for PHP $php_version"
     debug_log "Total RAM: $total_ram MB, CPU cores: $cpu_cores"
 
     # Calculate average PHP-FPM process size for this specific version
     local avg_process_size=$(ps -C php-fpm$php_version --no-headers -o rss 2>/dev/null | awk '{ sum += $1; count++ } END { if (count > 0) print int(sum / count / 1024); else print "0" }')
-    
+
     if [ "$avg_process_size" == "0" ]; then
         echo "Warning: No PHP-FPM $php_version processes are currently running. Using default values for calculations." >&2
         avg_process_size=50  # Default value in MB if no processes are running
@@ -149,7 +148,7 @@ get_php_fpm_settings() {
 
     echo "PHP $php_version settings:"
     echo "Average PHP-FPM process size: $avg_process_size MB"
-    
+
     # Function for formatted output of settings
     print_setting() {
         local param=$1
@@ -198,18 +197,70 @@ optimize_php_version() {
     # Update PHP memory limit
     update_config "$php_ini" "memory_limit" "$recommended_memory_limit"
 
+    # Test configuration files
+    if ! php-fpm$php_version -t; then
+        echo "Error: Configuration files for PHP $php_version are invalid. Rolling back changes." >&2
+        rollback_changes "$pool_conf" "$php_ini"
+        return 1
+    fi
+
     # Restart PHP-FPM
-    if systemctl restart "php$php_version-fpm"; then
-        echo "PHP-FPM $php_version restarted successfully"
-        debug_log "PHP-FPM $php_version restarted successfully"
+    if systemctl is-active --quiet "php$php_version-fpm"; then
+        if systemctl restart "php$php_version-fpm"; then
+            echo "PHP-FPM $php_version restarted successfully"
+            debug_log "PHP-FPM $php_version restarted successfully"
+        else
+            echo "Failed to restart PHP-FPM $php_version. Rolling back changes." >&2
+            rollback_changes "$pool_conf" "$php_ini"
+            return 1
+        fi
     else
-        echo "Failed to restart PHP-FPM $php_version. Please check the service status manually."
-        debug_log "Failed to restart PHP-FPM $php_version"
+        echo "PHP-FPM $php_version is not running. Skipping restart."
+        debug_log "PHP-FPM $php_version is not running. Skipping restart."
     fi
 
     echo "Optimization for PHP $php_version completed"
     debug_log "Optimization for PHP $php_version completed"
     echo
+}
+
+# Function to roll back changes
+rollback_changes() {
+    local pool_conf=$1
+    local php_ini=$2
+    local backup_dir="/root/php_backups"
+
+    echo "Rolling back changes for PHP $php_version"
+    debug_log "Rolling back changes for PHP $php_version"
+
+    # Restore backup files
+    cp "$backup_dir/$(basename "$pool_conf")."*".bak" "$pool_conf"
+    cp "$backup_dir/$(basename "$php_ini")."*".bak" "$php_ini"
+
+    echo "Changes rolled back successfully"
+    debug_log "Changes rolled back successfully"
+}
+
+# Function to validate PHP version selection
+validate_php_version_selection() {
+    local choice=$1
+    local selected_versions=()
+
+    if [[ $choice == "0" ]]; then
+        selected_versions=("${PHP_VERSIONS[@]}")
+    else
+        IFS=',' read -ra selected_indices <<< "$choice"
+        for index in "${selected_indices[@]}"; do
+            if [[ $index =~ ^[0-9]+$ ]] && [[ $index -le ${#PHP_VERSIONS[@]} && $index -gt 0 ]]; then
+                selected_versions+=("${PHP_VERSIONS[$((index-1))]}")
+            else
+                echo "Invalid PHP version selection: $index" >&2
+                return 1
+            fi
+        done
+    fi
+
+    echo "${selected_versions[@]}"
 }
 
 # Main script logic
@@ -234,18 +285,7 @@ done
 
 read -p "Enter your choice (comma-separated numbers, e.g., 1,2 or 0 for all): " choice
 
-if [[ $choice == "0" ]]; then
-    selected_versions=("${PHP_VERSIONS[@]}")
-else
-    IFS=',' read -ra selected_indices <<< "$choice"
-    selected_versions=()
-    for index in "${selected_indices[@]}"; do
-        if [[ $index -le ${#PHP_VERSIONS[@]} && $index -gt 0 ]]; then
-            selected_versions+=("${PHP_VERSIONS[$((index-1))]}")
-        fi
-    done
-fi
-
+selected_versions=($(validate_php_version_selection "$choice"))
 if [ ${#selected_versions[@]} -eq 0 ]; then
     echo "No valid PHP versions selected. Exiting."
     exit 1
