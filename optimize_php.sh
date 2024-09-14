@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Improved PHP-FPM Optimization Script with Error Handling and Logging
 
 # Exit immediately if a command exits with a non-zero status
