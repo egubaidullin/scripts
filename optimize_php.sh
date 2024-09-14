@@ -247,15 +247,25 @@ validate_php_version_selection() {
     local selected_versions=()
 
     if [[ $choice == "0" ]]; then
-        selected_versions=("${PHP_VERSIONS[@]}")
+        for version in "${PHP_VERSIONS[@]}"; do
+            local pool_conf="/etc/php/$version/fpm/pool.d/www.conf"
+            local php_ini="/etc/php/$version/fpm/php.ini"
+            if [ -f "$pool_conf" ] && [ -f "$php_ini" ]; then
+                selected_versions+=("$version")
+            fi
+        done
     else
         IFS=',' read -ra selected_indices <<< "$choice"
         for index in "${selected_indices[@]}"; do
             if [[ $index =~ ^[0-9]+$ ]] && [[ $index -le ${#PHP_VERSIONS[@]} && $index -gt 0 ]]; then
-                selected_versions+=("${PHP_VERSIONS[$((index-1))]}")
+                local version=${PHP_VERSIONS[$((index-1))]}
+                local pool_conf="/etc/php/$version/fpm/pool.d/www.conf"
+                local php_ini="/etc/php/$version/fpm/php.ini"
+                if [ -f "$pool_conf" ] && [ -f "$php_ini" ]; then
+                    selected_versions+=("$version")
+                fi
             else
                 echo "Invalid PHP version selection: $index" >&2
-                return 1
             fi
         done
     fi
