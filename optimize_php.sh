@@ -177,10 +177,10 @@ optimize_php_version() {
     local php_ini="/etc/php/$php_version/fpm/php.ini"
 
     if [ ! -f "$pool_conf" ] || [ ! -f "$php_ini" ]; then
-        echo "Error: Configuration files for PHP $php_version not found." >&2
+        echo "Error: Configuration files for PHP $php_version not found. Skipping optimization for this version." >&2
         return 1
     fi
-
+    
     # Create backups
     create_backup "$pool_conf"
     create_backup "$php_ini"
