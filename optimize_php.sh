@@ -138,7 +138,7 @@ get_php_fpm_settings() {
     debug_log "Getting settings for PHP $php_version"
 
     if [ ! -f "$pool_conf" ] || [ ! -f "$php_ini" ]; then
-        echo "Error: Configuration files for PHP $php_version not found." >&2
+        debug_log "Configuration files for PHP $php_version not found. Skipping."
         return 1
     fi
 
@@ -176,7 +176,7 @@ optimize_php_version() {
     local php_ini="/etc/php/$php_version/fpm/php.ini"
 
     if [ ! -f "$pool_conf" ] || [ ! -f "$php_ini" ]; then
-        echo "Error: Configuration files for PHP $php_version not found. Skipping optimization for this version." >&2
+        debug_log "Configuration files for PHP $php_version not found. Skipping optimization for this version."
         return 1
     fi
     
@@ -281,15 +281,23 @@ echo "Total RAM: $(free -m | awk '/Mem/{print $2}') MB"
 echo "CPU cores: $(nproc)"
 echo
 
-# Display current settings and recommended changes for all versions
+# Display current settings and recommended changes for available versions
+available_versions=()
 for version in "${PHP_VERSIONS[@]}"; do
-    get_php_fpm_settings "$version"
+    if get_php_fpm_settings "$version"; then
+        available_versions+=("$version")
+    fi
 done
 
+if [ ${#available_versions[@]} -eq 0 ]; then
+    echo "No PHP versions with valid configurations found. Exiting."
+    exit 1
+fi
+
 echo "Select PHP versions to optimize:"
-echo "0) All versions"
-for i in "${!PHP_VERSIONS[@]}"; do
-    echo "$((i+1))) ${PHP_VERSIONS[i]}"
+echo "0) All available versions"
+for i in "${!available_versions[@]}"; do
+    echo "$((i+1))) ${available_versions[i]}"
 done
 
 read -p "Enter your choice (comma-separated numbers, e.g., 1,2 or 0 for all): " choice
