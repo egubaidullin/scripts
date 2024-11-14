@@ -15,3 +15,5 @@
 | **[get_files_info.py](get_files_info.py)** | This script is a Python command-line utility that searches for files within a specified directory based on their creation date and logs the results. [Learn more](get_files_info.md). |
 | **[wp_rights.sh](wp_rights.sh)** | This script sets the appropriate permissions and ownership for a WordPress installation running under Nginx on Ubuntu. [Learn more](wp_rights.md). |
 | **[compress_png_lossy.sh](compress_png_lossy.sh)** | This script compresses PNG images in a specified directory and its subdirectories if their file size exceeds a certain threshold. [Learn more](compress_png_lossy.md). |
+| **[compress_jpg.sh](compress_jpg.sh)** | This script compresses JPEG images in a specified directory and its subdirectories if their file size exceeds a certain threshold. [Learn more](compress_jpg.md). |
+
