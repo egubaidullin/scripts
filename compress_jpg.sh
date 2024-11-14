@@ -60,9 +60,9 @@ while IFS= read -r -d $'\0' img; do
     filesize_before=$(stat -c%s "$img")
 
     if (( filesize_before > THRESHOLD )); then
-        # Get image dimensions
+        # Get image dimensions, with error handling for corrupt files
         if ! resolution=$(identify -format "%wx%h" "$img" 2>/dev/null); then
-            echo "$(date) - Failed to get dimensions for $img" >> "$LOG_FILE"
+            echo "$(date) - Failed to get dimensions for $img (possibly corrupt)" >> "$LOG_FILE"
             continue
         fi
 
@@ -71,28 +71,29 @@ while IFS= read -r -d $'\0' img; do
 
         # Resize if necessary
         if (( width > MAX_WIDTH || height > MAX_HEIGHT )); then
-            if convert "$img" -resize "${MAX_WIDTH}x${MAX_HEIGHT}>" "$img"; then
-                echo "$(date) - $img was resized to fit within ${MAX_WIDTH}x${MAX_HEIGHT}" >> "$LOG_FILE"
-            else
-                echo "$(date) - Failed to resize $img" >> "$LOG_FILE"
+            if ! convert "$img" -resize "${MAX_WIDTH}x${MAX_HEIGHT}>" "$img" 2>/dev/null; then
+                echo "$(date) - Failed to resize $img (possibly corrupt)" >> "$LOG_FILE"
                 continue
+            else
+                echo "$(date) - $img was resized to fit within ${MAX_WIDTH}x${MAX_HEIGHT}" >> "$LOG_FILE"
             fi
         fi
 
-        # Check if optimization is needed
-        if jpegoptim --no-action --max=$QUALITY "$img" > /dev/null 2>&1; then
-            if jpegoptim --max=$QUALITY --strip-all "$img"; then
-                filesize_after=$(stat -c%s "$img")
-                saved=$((filesize_before - filesize_after))
-                total_saved=$((total_saved + saved))
-                processed_files=$((processed_files + 1))
+        # Check if optimization is needed and optimize
+        if ! jpegoptim --no-action --max=$QUALITY "$img" > /dev/null 2>&1; then
+            echo "$(date) - Failed to optimize $img (possibly corrupt)" >> "$LOG_FILE"
+            continue
+        fi
 
-                echo "$(date) - $img was optimized. Saved: $saved bytes" >> "$LOG_FILE"
-            else
-                echo "$(date) - Failed to optimize $img" >> "$LOG_FILE"
-            fi
+        # If optimization is possible, save space
+        if jpegoptim --max=$QUALITY --strip-all "$img"; then
+            filesize_after=$(stat -c%s "$img")
+            saved=$((filesize_before - filesize_after))
+            total_saved=$((total_saved + saved))
+            processed_files=$((processed_files + 1))
+            echo "$(date) - $img was optimized. Saved: $saved bytes" >> "$LOG_FILE"
         else
-            echo "$(date) - $img is already optimized, skipping." >> "$LOG_FILE"
+            echo "$(date) - Failed to optimize $img" >> "$LOG_FILE"
         fi
     fi
 done < <(find "$TARGET_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" \) -print0)
@@ -115,4 +116,3 @@ echo "- Files processed: $processed_files"
 echo "- Space saved: $total_saved bytes"
 echo "- Time taken: $duration seconds"
 echo "- See $LOG_FILE for details"
-
