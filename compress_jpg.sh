@@ -1,47 +1,118 @@
 #!/bin/bash
 
-# Set the threshold size in bytes (e.g., 400 KB = 409600 bytes)
-THRESHOLD=409600
-
-# Log file path
+# Default settings
+THRESHOLD=409600    # 400KB
+QUALITY=70          # JPEG quality
+MAX_WIDTH=1920      # Maximum width
+MAX_HEIGHT=1080     # Maximum height
 LOG_FILE="compression_log.txt"
 
-# Quality threshold (percentage)
-QUALITY=80
+# Function to print usage
+usage() {
+    echo "Usage: $0 [-t threshold] [-q quality] [-w max_width] [-h max_height] directory"
+    echo "Options:"
+    echo "  -t: Threshold size in bytes (default: 409600)"
+    echo "  -q: JPEG quality (0-100, default: 70)"
+    echo "  -w: Maximum width (default: 1920)"
+    echo "  -h: Maximum height (default: 1080)"
+    exit 1
+}
+
+# Parse command line arguments
+while getopts "t:q:w:h:" opt; do
+    case $opt in
+        t) THRESHOLD=$OPTARG ;;
+        q) QUALITY=$OPTARG ;;
+        w) MAX_WIDTH=$OPTARG ;;
+        h) MAX_HEIGHT=$OPTARG ;;
+        \?) usage ;;
+    esac
+done
+
+# Shift to the directory argument
+shift $((OPTIND-1))
 
 # Check if directory argument is provided
 if [[ -z "$1" ]]; then
-    echo "Usage: $0 <directory>"
-    exit 1
+    usage
 fi
 
-# Target directory
 TARGET_DIR="$1"
+
+# Check for required commands
+for cmd in identify convert jpegoptim; do
+    if ! command -v $cmd &> /dev/null; then
+        echo "Error: $cmd is not installed"
+        exit 1
+    fi
+done
+
+# Initialize statistics
+total_saved=0
+processed_files=0
+start_time=$(date +%s)
 
 # Start logging
 echo "Compression started at $(date)" > "$LOG_FILE"
 
-# Find and process each JPEG file in the specified directory and its subdirectories
-find "$TARGET_DIR" -type f -iname "*.jpg" -o -iname "*.jpeg" | while read -r img; do
-    # Get the file size before compression
+# Process images
+while IFS= read -r -d $'\0' img; do
     filesize_before=$(stat -c%s "$img")
 
-    # Check if file size exceeds the threshold
     if (( filesize_before > THRESHOLD )); then
-        # Check if the file can still be optimized
-        jpegoptim --no-action --max=$QUALITY "$img" > /dev/null 2>&1
+        # Get image dimensions
+        if ! resolution=$(identify -format "%wx%h" "$img" 2>/dev/null); then
+            echo "$(date) - Failed to get dimensions for $img" >> "$LOG_FILE"
+            continue
+        fi
 
-        # If the output indicates the file can be optimized, proceed with compression
-        if [[ $? -eq 0 ]]; then
-            # Compress the JPEG image to the specified quality and remove metadata
-            jpegoptim --max=$QUALITY --strip-all "$img"
-            echo "$(date) - $img was compressed to $QUALITY% quality and metadata removed." >> "$LOG_FILE"
+        width=$(echo "$resolution" | cut -d'x' -f1)
+        height=$(echo "$resolution" | cut -d'x' -f2)
+
+        # Resize if necessary
+        if (( width > MAX_WIDTH || height > MAX_HEIGHT )); then
+            if convert "$img" -resize "${MAX_WIDTH}x${MAX_HEIGHT}>" "$img"; then
+                echo "$(date) - $img was resized to fit within ${MAX_WIDTH}x${MAX_HEIGHT}" >> "$LOG_FILE"
+            else
+                echo "$(date) - Failed to resize $img" >> "$LOG_FILE"
+                continue
+            fi
+        fi
+
+        # Check if optimization is needed
+        if jpegoptim --no-action --max=$QUALITY "$img" > /dev/null 2>&1; then
+            if jpegoptim --max=$QUALITY --strip-all "$img"; then
+                filesize_after=$(stat -c%s "$img")
+                saved=$((filesize_before - filesize_after))
+                total_saved=$((total_saved + saved))
+                processed_files=$((processed_files + 1))
+
+                echo "$(date) - $img was optimized. Saved: $saved bytes" >> "$LOG_FILE"
+            else
+                echo "$(date) - Failed to optimize $img" >> "$LOG_FILE"
+            fi
         else
             echo "$(date) - $img is already optimized, skipping." >> "$LOG_FILE"
         fi
     fi
-done
+done < <(find "$TARGET_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" \) -print0)
 
-# Completion message
-echo "$(date) - Compression completed." >> "$LOG_FILE"
-echo "Compression completed."
+# Calculate execution time
+end_time=$(date +%s)
+duration=$((end_time - start_time))
+
+# Log final statistics
+{
+    echo "$(date) - Compression completed."
+    echo "Total files processed: $processed_files"
+    echo "Total space saved: $total_saved bytes"
+    echo "Execution time: $duration seconds"
+} >> "$LOG_FILE"
+
+# Print summary to console
+echo "Compression completed:"
+echo "- Files processed: $processed_files"
+echo "- Space saved: $total_saved bytes"
+echo "- Time taken: $duration seconds"
+echo "- See $LOG_FILE for details"
+
