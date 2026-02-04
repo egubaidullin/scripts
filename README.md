@@ -16,4 +16,4 @@
 | **[wp_rights.sh](wp_rights.sh)** | This script sets the appropriate permissions and ownership for a WordPress installation running under Nginx on Ubuntu. [Learn more](wp_rights.md). |
 | **[compress_png_lossy.sh](compress_png_lossy.sh)** | This script compresses PNG images in a specified directory and its subdirectories if their file size exceeds a certain threshold. [Learn more](compress_png_lossy.md). |
 | **[compress_jpg.sh](compress_jpg.sh)** | This script compresses JPEG images in a specified directory and its subdirectories if their file size exceeds a certain threshold. [Learn more](compress_jpg.md). |
-| **[ufw-sync.sh](ufw-sync.sh)** | This script compresses JPEG images in a specified directory and its subdirectories if their file size exceeds a certain threshold. [Learn more](ufw-sync.md). |
+| **[ufw-sync.sh](ufw-sync.sh)** | This script configures UFW (Uncomplicated Firewall) by detecting the current IP, resetting UFW settings, and applying rules for SSH, Docker, and Cloudflare IPs. It also integrates with Fail2Ban for additional security. [Learn more](ufw-sync.md). |
