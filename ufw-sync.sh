@@ -103,6 +103,8 @@ fi
 plan "ufw allow ${SSH_PORT}/tcp comment 'SSH Global'"
 plan "ufw allow 80/tcp"
 plan "ufw allow 443/tcp"
+plan "ufw route allow 80/tcp"
+plan "ufw route allow 443/tcp"
 plan "ufw allow in on lo"
 
 # 5. Apply Admin Whitelist & Docker Routes
@@ -111,7 +113,7 @@ if [ -f "$IP_FILE" ]; then
   while IFS= read -r ip || [ -n "$ip" ]; do
     case "$ip" in ''|\#*) continue ;; esac
     clean_ip=$(echo "$ip" | xargs)
-    
+
     # Allow Admin Port (Host)
     plan "ufw allow from ${clean_ip} to any port ${ADMIN_PORT} proto tcp comment 'admin whitelist'"
     # Allow Docker Routing (NPM Container)
@@ -122,10 +124,14 @@ fi
 # 6. Cloudflare & Docker Networks
 if command -v curl &>/dev/null; then
   info "Updating Cloudflare IPs..."
-  for ip in $(curl -fsS "$CLOUDFLARE_IPV4_URL" || true); do
-    [ -n "$ip" ] && plan "ufw allow from ${ip} to any port 80,443 proto tcp" >/dev/null
+  for ip in $(curl -fsS "$CLOUDFLARE_IPS_V4" || true); do
+    [ -z "$ip" ] && continue
+    plan "ufw allow from ${ip} to any port 80,443 proto tcp"
+    plan "ufw route allow from ${ip} to any port 80,443 proto tcp" # <-- ДОБАВИТЬ ЭТО
   done
 fi
+
+
 
 if command -v docker &>/dev/null; then
   docker network ls --format '{{.Name}}' | while read -r net; do
@@ -152,7 +158,7 @@ if command -v fail2ban-client &>/dev/null; then
       NEW_IGNORE="${NEW_IGNORE} ${clean_ip}"
     done < "$IP_FILE"
   fi
-  
+
   if [ -n "$NEW_IGNORE" ]; then
     mkdir -p "/etc/fail2ban/jail.d"
     echo -e "[DEFAULT]\nignoreip = 127.0.0.1/8 ::1 ${NEW_IGNORE}" > "/etc/fail2ban/jail.d/ufw-sync-ignoreip.conf"
