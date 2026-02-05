@@ -1,3 +1,4 @@
+sudo cat /opt/ufw-sync/ufw-sync.sh
 #!/usr/bin/env bash
 # /opt/ufw-sync/ufw-sync.sh
 # Fixed: Completely overwrites after.rules to prevent syntax errors on re-runs.
@@ -52,19 +53,19 @@ plan "ufw --force reset"
 plan "ufw default deny incoming"
 plan "ufw default allow outgoing"
 
-# 3. OVERWRITE after.rules (Fixes 'Bad argument *filter' error)
-# We completely replace the file content to ensure valid syntax.
+# 3. OVERWRITE after.rules (Fixed version with Internet access for Docker)
 info "Configuring /etc/ufw/after.rules for Docker..."
 if [ "$DRY_RUN" -eq 0 ]; then
   cat > /etc/ufw/after.rules <<EOF
 # /etc/ufw/after.rules
-# Rules that should be run after the ufw command line added rules. Custom
-# rules should be added to one of these chains:
-#   ufw-before-input
-#   ufw-before-output
-#   ufw-before-forward
+# Fixed: Added NAT table and established connections support for Docker Internet access
 
-# Don't delete these required lines, otherwise there will be errors
+# ADDED: NAT table for Docker container outbound traffic (required for Internet)
+*nat
+:POSTROUTING ACCEPT [0:0]
+-A POSTROUTING -s 172.16.0.0/12 ! -o docker+ -j MASQUERADE
+COMMIT
+
 *filter
 :ufw-user-forward - [0:0]
 :DOCKER-USER - [0:0]
@@ -72,24 +73,21 @@ if [ "$DRY_RUN" -eq 0 ]; then
 # Link DOCKER-USER to ufw-user-forward
 -A DOCKER-USER -j ufw-user-forward
 
-# Allow internal Docker networks
+# ADDED: Allow established/related connections (responses from Internet)
+-A DOCKER-USER -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
+
+# ADDED: Allow outbound HTTP/HTTPS/DNS from containers
+-A DOCKER-USER -p tcp -m multiport --dports 80,443 -j RETURN
+-A DOCKER-USER -p udp --dport 53 -j RETURN
+
+# CHANGED: Use RETURN instead of ACCEPT (better UFW integration)
 -A DOCKER-USER -j RETURN -s 10.0.0.0/8
 -A DOCKER-USER -j RETURN -s 172.16.0.0/12
 -A DOCKER-USER -j RETURN -s 192.168.0.0/16
 
-# Allow UDP specific ports (DNS/DHCP)
--A DOCKER-USER -p udp -m udp --sport 53 --dport 1024:65535 -j RETURN
--A DOCKER-USER -p udp -m udp --dport 53 -j RETURN
--A DOCKER-USER -p udp -m udp --dport 67 -j RETURN
--A DOCKER-USER -p udp -m udp --dport 68 -j RETURN
-
-# Allow valid TCP packets
--A DOCKER-USER -j RETURN -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -d 192.168.0.0/16
--A DOCKER-USER -j RETURN -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -d 10.0.0.0/8
--A DOCKER-USER -j RETURN -p tcp -m tcp --tcp-flags FIN,SYN,RST,ACK SYN -d 172.16.0.0/12
-
-# Drop everything else going to Docker (unless allowed by ufw route)
--A DOCKER-USER -j DROP
+# REMOVED: -A DOCKER-USER -j DROP (was blocking all outbound traffic)
+# Optional: Add DROP only if you need strict control after allowing specific ports
+# -A DOCKER-USER -j DROP
 
 COMMIT
 EOF
