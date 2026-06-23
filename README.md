@@ -17,4 +17,4 @@
 | **[compress_png_lossy.sh](compress_png_lossy.sh)** | This script compresses PNG images in a specified directory and its subdirectories if their file size exceeds a certain threshold. [Learn more](compress_png_lossy.md). |
 | **[compress_jpg.sh](compress_jpg.sh)** | This script compresses JPEG images in a specified directory and its subdirectories if their file size exceeds a certain threshold. [Learn more](compress_jpg.md). |
 | **[ufw-sync.sh](ufw-sync/ufw-sync.sh)** | This script configures UFW (Uncomplicated Firewall) by detecting the current IP, resetting UFW settings, and applying rules for SSH, Docker, and Cloudflare IPs. It also integrates with Fail2Ban for additional security. [Learn more](ufw-sync/ufw-sync.md). |
-| **[ssh-quick-setup.sh](ssh-quick-setup.sh)** | One-shot script to connect a new remote VPS in under a minute. [Learn more](ssh-quick-setup.md). |
+| **[ssh-manager.sh](ssh-manager.sh)** | Interactive SSH key & config manager for macOS — generate Ed25519 keys, copy them to remote servers, and manage ~/.ssh/config entries. [Learn more](ssh-manager.md). |
